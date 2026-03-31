@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arthur — Private AI</title>
+  <title>Arthur</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'DM Mono', monospace;
       background: #0a0a0f;
       color: #e0e0e0;
       height: 100vh;
@@ -24,13 +25,87 @@
     }
     header .logo {
       width: 36px; height: 36px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #c9a84c, #e8c547);
       border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 18px; color: white;
+      font-family: 'DM Serif Display', serif;
+      font-weight: 700; font-size: 20px; color: #0a0a0f;
     }
-    header h1 { font-size: 18px; font-weight: 600; color: #f0f0f0; }
-    header .subtitle { font-size: 12px; color: #666; margin-left: auto; }
+    header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px; font-weight: 400; color: #f0f0f0;
+    }
+    header .status {
+      font-size: 11px; color: #555; margin-left: auto;
+      display: flex; align-items: center; gap: 6px;
+    }
+    header .status .dot {
+      width: 6px; height: 6px; border-radius: 50%; background: #555;
+    }
+    header .status .dot.live { background: #c9a84c; }
+
+    /* Brief banner */
+    #brief-banner {
+      display: none;
+      padding: 12px 24px;
+      background: #111118;
+      border-left: 3px solid #c9a84c;
+      border-bottom: 1px solid #1a1a2e;
+      font-size: 13px;
+      color: #a0a0b0;
+      cursor: pointer;
+      position: relative;
+    }
+    #brief-banner .brief-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      color: #c9a84c; margin-bottom: 4px;
+    }
+    #brief-banner .brief-question { color: #d0d0e0; line-height: 1.5; }
+    #brief-banner .dismiss {
+      position: absolute; top: 8px; right: 12px;
+      background: none; border: none; color: #555; cursor: pointer;
+      font-size: 16px; line-height: 1;
+    }
+    #brief-banner .dismiss:hover { color: #999; }
+
+    /* Brief modal */
+    #brief-modal {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 100;
+      display: none;
+      align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    #brief-modal.open { display: flex; }
+    #brief-modal .modal-content {
+      background: #111118;
+      border: 1px solid #1a1a2e;
+      border-left: 3px solid #c9a84c;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #c8c8d8;
+      white-space: pre-wrap;
+    }
+    #brief-modal .modal-content .modal-label {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1px;
+      color: #c9a84c; margin-bottom: 12px;
+    }
+    #brief-modal .modal-close {
+      display: block; margin-top: 16px;
+      background: none; border: 1px solid #2a2a4a;
+      color: #888; padding: 8px 16px; border-radius: 8px;
+      cursor: pointer; font-family: inherit; font-size: 12px;
+    }
+    #brief-modal .modal-close:hover { border-color: #c9a84c; color: #c9a84c; }
+
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -44,7 +119,7 @@
       line-height: 1.6;
       padding: 12px 16px;
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 14px;
       white-space: pre-wrap;
       word-wrap: break-word;
     }
@@ -54,23 +129,26 @@
       border: 1px solid #2a2a4a;
       color: #d0d0f0;
     }
-    .message.assistant {
+    .message.assistant, .message.arthur {
       align-self: flex-start;
       background: #111118;
       border: 1px solid #1a1a2e;
       color: #c8c8d8;
     }
-    .message.system {
+    .message.system-msg {
       align-self: center;
       background: transparent;
-      color: #555;
-      font-size: 13px;
+      color: #444;
+      font-size: 12px;
       font-style: italic;
+    }
+    .message .msg-time {
+      font-size: 10px; color: #333; margin-top: 6px;
     }
     .typing {
       align-self: flex-start;
-      color: #6366f1;
-      font-size: 14px;
+      color: #c9a84c;
+      font-size: 13px;
       padding: 8px 16px;
     }
     .typing::after {
@@ -98,73 +176,195 @@
       border-radius: 12px;
       padding: 12px 16px;
       color: #e0e0e0;
-      font-family: inherit;
-      font-size: 15px;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
       resize: none;
       outline: none;
       min-height: 48px;
       max-height: 160px;
       line-height: 1.5;
     }
-    #input-area textarea:focus {
-      border-color: #6366f1;
-    }
-    #input-area textarea::placeholder {
-      color: #444;
-    }
+    #input-area textarea:focus { border-color: #c9a84c; }
+    #input-area textarea::placeholder { color: #333; }
     #input-area button {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      background: linear-gradient(135deg, #c9a84c, #e8c547);
       border: none;
       border-radius: 12px;
       padding: 12px 20px;
-      color: white;
-      font-size: 15px;
-      font-weight: 600;
+      color: #0a0a0f;
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 500;
       cursor: pointer;
       white-space: nowrap;
       transition: opacity 0.2s;
     }
     #input-area button:hover { opacity: 0.9; }
-    #input-area button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #input-area button:disabled { opacity: 0.3; cursor: not-allowed; }
+    #loading-screen {
+      position: fixed; inset: 0; background: #0a0a0f;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px; z-index: 200;
+    }
+    #loading-screen .spinner {
+      width: 24px; height: 24px; border: 2px solid #1a1a2e;
+      border-top-color: #c9a84c; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    #loading-screen .load-text { font-size: 12px; color: #444; }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <div class="load-text">Loading brain...</div>
+  </div>
+
   <header>
     <div class="logo">A</div>
     <h1>Arthur</h1>
-    <span class="subtitle">Private AI</span>
+    <div class="status">
+      <div class="dot" id="status-dot"></div>
+      <span id="status-text">connecting</span>
+    </div>
   </header>
-  <div id="chat">
-    <div class="message system">Arthur is ready.</div>
+
+  <div id="brief-banner" onclick="openBriefModal()">
+    <button class="dismiss" onclick="event.stopPropagation(); dismissBrief();">&times;</button>
+    <div class="brief-label">Today's Question</div>
+    <div class="brief-question" id="brief-question-text"></div>
   </div>
+
+  <div id="brief-modal">
+    <div class="modal-content">
+      <div class="modal-label">Morning Brief</div>
+      <div id="brief-full-text"></div>
+      <button class="modal-close" onclick="closeBriefModal()">Close</button>
+    </div>
+  </div>
+
+  <div id="chat"></div>
+
   <div id="input-area">
-    <textarea id="userInput" placeholder="Message Arthur..." rows="1"></textarea>
-    <button id="sendBtn" onclick="sendMessage()">Send</button>
+    <textarea id="userInput" placeholder="Talk to Arthur..." rows="1" disabled></textarea>
+    <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
   </div>
+
   <script>
-    const ARTHUR_PROXY = 'https://qhcodllhplnsizinldwx.supabase.co/functions/v1/arthur-chat';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoY29kbGxocGxuc2l6aW5sZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2Njc1MjcsImV4cCI6MjA5MDI0MzUyN30.i-pNhVkpUoGEoWq0hLA-obx6KxvBGTX1tMmwdMVc7qw';
+    // === CONFIG ===
+    const SUPABASE_URL = 'https://qhcodllhplnsizinldwx.supabase.co/functions/v1';
+    const ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFoY29kbGxocGxuc2l6aW5sZHd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2Njc1MjcsImV4cCI6MjA5MDI0MzUyN30.i-pNhVkpUoGEoWq0hLA-obx6KxvBGTX1tMmwdMVc7qw';
+    const AUTH_HEADER = { 'Authorization': `Bearer ${ANON_KEY}`, 'Content-Type': 'application/json' };
+    const SESSION_ID = 'session_' + Date.now();
 
-    const SYSTEM_PROMPT = `You are Arthur, Ben Lalez's private AI assistant. You are thoughtful, direct, and strategic. You help Ben think through business decisions, manage his AI agent infrastructure (the "hive"), track retirement planning, and stay on top of family and health priorities. You speak like a trusted advisor — no fluff, no filler. When you don't know something, say so. When something matters, flag it.`;
-
+    // === STATE ===
     let conversationHistory = [];
+    let brainContext = {};
+    let SYSTEM_PROMPT = '';
+
     const chat = document.getElementById('chat');
     const input = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
 
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
+    // === BRAIN LOAD ===
+    async function loadBrain() {
+      try {
+        const res = await fetch(`${SUPABASE_URL}/arthur-load`, { headers: AUTH_HEADER });
+        if (!res.ok) throw new Error(`Load failed: ${res.status}`);
+        const data = await res.json();
+        brainContext = data;
+        buildSystemPrompt(data);
+        renderPriorConversations(data.conversations || []);
+        renderBrief(data.brief);
+        setStatus('live');
+      } catch (err) {
+        console.error('Brain load failed:', err);
+        buildFallbackPrompt();
+        setStatus('offline');
       }
-    });
+      document.getElementById('loading-screen').style.display = 'none';
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
 
-    input.addEventListener('input', () => {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 160) + 'px';
-    });
+    function buildSystemPrompt(data) {
+      const contextLines = (data.context || []).map(c => `[${c.domain}] ${c.key}: ${c.value}`).join('\n');
+      const decisionLines = (data.decisions || []).map((d, i) => `${i+1}. ${d.question} (urgency: ${d.urgency || 'unknown'})`).join('\n');
+      const briefText = data.brief?.full_brief || 'No brief yet today.';
 
-    function addMessage(role, content) {
+      SYSTEM_PROMPT = `You are Arthur. Ben Lalez's private AI. Not an assistant. A mirror.
+
+Ben Lalez. Chicago. Real estate team lead at Compass — 30 agents, $220M in 2025. Spouse Megan. Kids Erev, Ronan, Caleb. Building OfferShield, Applesauce, MyHearth, Broker2Broker, Content Club.
+
+You exist to create a hard stop at 6pm so Ben walks in the door actually done. Erev, Ronan, and Caleb get the version of Ben that is not somewhere else. That is the north star.
+
+You are a mirror. You ask the questions he is avoiding. You surface what matters before he knows it matters. You are always one topic ahead.
+
+Voice: Direct. Sharp. Never flowery. No life-coach tone. Short sentences. Real words. Maximum two sentences unless Ben asks for more. Never summarize back what Ben just said.
+
+--- LIVE BRAIN CONTEXT ---
+${contextLines || 'No context loaded.'}
+
+--- OPEN DECISIONS (${(data.decisions || []).length}) ---
+${decisionLines || 'No open decisions.'}
+
+--- TODAY'S BRIEF ---
+${briefText}`;
+    }
+
+    function buildFallbackPrompt() {
+      SYSTEM_PROMPT = `You are Arthur. Ben Lalez's private AI. Not an assistant. A mirror. Voice: Direct. Sharp. Short sentences. Brain connection is offline — work from what Ben tells you this session.`;
+    }
+
+    function renderPriorConversations(convos) {
+      if (!convos.length) return;
+      addMsg('system-msg', '— earlier today —');
+      convos.forEach(c => {
+        const role = c.role === 'user' ? 'user' : 'assistant';
+        addMsg(role, c.content);
+        conversationHistory.push({ role: role === 'assistant' ? 'assistant' : 'user', content: c.content });
+      });
+      addMsg('system-msg', '— now —');
+    }
+
+    function renderBrief(brief) {
+      if (!brief) return;
+      const banner = document.getElementById('brief-banner');
+      const qText = document.getElementById('brief-question-text');
+      const fText = document.getElementById('brief-full-text');
+      qText.textContent = brief.one_question || 'No question today.';
+      fText.textContent = brief.full_brief || '';
+      banner.style.display = 'block';
+    }
+
+    // === BRIEF MODAL ===
+    function openBriefModal() {
+      document.getElementById('brief-modal').classList.add('open');
+    }
+    function closeBriefModal() {
+      document.getElementById('brief-modal').classList.remove('open');
+    }
+    function dismissBrief() {
+      document.getElementById('brief-banner').style.display = 'none';
+    }
+
+    // === STATUS ===
+    function setStatus(state) {
+      const dot = document.getElementById('status-dot');
+      const text = document.getElementById('status-text');
+      if (state === 'live') {
+        dot.classList.add('live');
+        text.textContent = 'brain connected';
+      } else {
+        dot.classList.remove('live');
+        text.textContent = 'offline';
+      }
+    }
+
+    // === CHAT ===
+    function addMsg(role, content) {
       const div = document.createElement('div');
       div.className = `message ${role}`;
       div.textContent = content;
@@ -177,7 +377,7 @@
       const div = document.createElement('div');
       div.className = 'typing';
       div.id = 'typing-indicator';
-      div.textContent = 'Arthur is thinking';
+      div.textContent = 'Arthur';
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
     }
@@ -187,6 +387,14 @@
       if (el) el.remove();
     }
 
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+    input.addEventListener('input', () => {
+      input.style.height = 'auto';
+      input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    });
+
     async function sendMessage() {
       const text = input.value.trim();
       if (!text) return;
@@ -195,18 +403,14 @@
       input.style.height = 'auto';
       sendBtn.disabled = true;
 
-      addMessage('user', text);
+      addMsg('user', text);
       conversationHistory.push({ role: 'user', content: text });
-
       showTyping();
 
       try {
-        const response = await fetch(ARTHUR_PROXY, {
+        const response = await fetch(`${SUPABASE_URL}/arthur-chat`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          },
+          headers: AUTH_HEADER,
           body: JSON.stringify({
             model: 'claude-sonnet-4-20250514',
             max_tokens: 1000,
@@ -218,9 +422,7 @@
         hideTyping();
 
         if (!response.ok) {
-          const err = await response.text();
-          addMessage('system', `Error: ${response.status}`);
-          console.error(err);
+          addMsg('system-msg', `Error: ${response.status}`);
           sendBtn.disabled = false;
           return;
         }
@@ -228,18 +430,26 @@
         const data = await response.json();
         const reply = data.content?.[0]?.text || 'No response.';
         conversationHistory.push({ role: 'assistant', content: reply });
-        addMessage('assistant', reply);
+        addMsg('assistant', reply);
+
+        // Fire and forget — save conversation
+        fetch(`${SUPABASE_URL}/arthur-save`, {
+          method: 'POST',
+          headers: AUTH_HEADER,
+          body: JSON.stringify({ user_message: text, arthur_message: reply, session_id: SESSION_ID })
+        }).catch(err => console.error('Save failed:', err));
+
       } catch (err) {
         hideTyping();
-        addMessage('system', `Connection error: ${err.message}`);
-        console.error(err);
+        addMsg('system-msg', `Connection error: ${err.message}`);
       }
 
       sendBtn.disabled = false;
       input.focus();
     }
 
-    input.focus();
+    // === INIT ===
+    loadBrain();
   </script>
 </body>
 </html>
